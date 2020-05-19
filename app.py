@@ -1,24 +1,40 @@
+import pandas_datareader.data as web
+import datetime
 import dash
-from dash.dependencies import Output, Input
 import dash_core_components as dcc
 import dash_html_components as html
 
 app = dash.Dash()
 
+stock = 'TSLA'
+
+start = datetime.datetime(2010, 1, 1)
+end = datetime.datetime.now()
+df = web.DataReader(stock, 'yahoo', start, end)
+df.reset_index(inplace=True)
+df.set_index("Date", inplace=True)
+if "Symbol" in df.columns:
+    df = df.drop("Symbol", axis=1)
+
 app.layout = html.Div(children=[
-    dcc.Input(id='input', value='Enter something', type='text'),
-    html.Div(id='output')
+    html.H1(children='Dashboard Example'),
+
+    html.Div(children='''
+        Stocks line graph
+    '''),
+
+    dcc.Graph(
+        id='example-graph',
+        figure={
+            'data': [
+                {'x': df.index, 'y': df.Close, 'type': 'line', 'name': stock},
+            ],
+            'layout': {
+                'title': f'{stock} stocks'
+            }
+        }
+    )
 ])
-
-
-@app.callback(Output(component_id='output',
-                     component_property='children'),
-              [Input(component_id='input',
-                     component_property='value')],
-              )
-def update_value(input_data):
-    return f"Input: {input_data}"
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
